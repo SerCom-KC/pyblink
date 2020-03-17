@@ -96,8 +96,9 @@ class Client:
 
     def receive_raw_message(self, return_none=False):
         head = MsgHead()
+        receive_lock_no = self.receive_lock + 1
         self.receive_lock += 1
-        while self.receive_lock > 1: time.sleep(0.1)
+        while self.receive_lock > receive_lock_no: time.sleep(random.random())
         while True:
             try:
                 received = self.sock.recv(10) # MsgHead has a fixed length of 10 bytes
