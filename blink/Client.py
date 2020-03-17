@@ -23,6 +23,7 @@ class Client:
         self.skey = None
         self.rsp_list = []
         self.logger = self.config.logger
+        self.receive_lock = 0
         self.logger.info("Initiated")
 
     def connect(self):
@@ -73,6 +74,7 @@ class Client:
                     rsp = None
                 elif isinstance(rsp, MsgBody):
                     self.rsp_list.append(rsp)
+            time.sleep(0.5)
 
     def __enter__(self):
         self.connect()
@@ -94,6 +96,8 @@ class Client:
 
     def receive_raw_message(self, return_none=False):
         head = MsgHead()
+        self.receive_lock += 1
+        while self.receive_lock > 1: time.sleep(0.1)
         while True:
             try:
                 received = self.sock.recv(10) # MsgHead has a fixed length of 10 bytes
@@ -101,19 +105,31 @@ class Client:
             except socket.error as e:
                 if e.errno == 11:
                     self.logger.debug("Waiting for message")
-                    if return_none: return None
+                    if return_none:
+                        self.receive_lock -= 1
+                        return None
                     else:                        
                         time.sleep(0.1)
                         continue
                 elif e.errno == 9:
                     self.logger.info("Socket is already closed, stopping listener thread")
                     self.thread_stop = True
+                    self.receive_lock -= 1
                     return
                 else:
+                    self.receive_lock -= 1
                     raise e
-        head.ParseFromString(received)
-        body = MsgBody()
-        received = self.sock.recv(head.len) # length of MsgBody can be retrieved from MsgHead.len
+            except Exception as e:
+                self.receive_lock -= 1
+                raise e
+        try:
+            head.ParseFromString(received)
+            body = MsgBody()
+            received = self.sock.recv(head.len) # length of MsgBody can be retrieved from MsgHead.len
+        except Exception as e:
+            self.receive_lock -= 1
+            raise e
+        self.receive_lock -= 1
         if len(received) != head.len:
             raise RuntimeError("socket connection broken")
         body.ParseFromString(received)
