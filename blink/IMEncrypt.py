@@ -24,4 +24,4 @@ class IMEncrypt:
         cipher = AES.new(key, AES.MODE_CBC, IMEncrypt.iv)
         result = cipher.decrypt(payload)
         padding_len = result[-1]
-        return result[:-padding_len]
+        return result[:-padding_len] if result[-padding_len:] == (chr(padding_len)*padding_len).encode("utf-8") else result
