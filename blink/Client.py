@@ -297,18 +297,18 @@ class Client:
         self.send_raw_message(req)
         rsp = None
         while rsp is None:
-            self.logger.debug("Wating for response")
+            self.logger.debug("Waiting for response (request ID=%s)" % (req_id))
             if self.listener_stop:
                 rsp = self.receive_raw_message()
                 if rsp.cmd == CmdId.EN_CMD_ID_MSG_NOTIFY:
                     self.__notify_handler(rsp)
                     rsp = None
                 elif rsp.cli_req_id != req_id:
-                    self.logger.debug("Unexpected response type, appending to response list")
+                    self.logger.debug("Request ID does not match %s, appending to response list" % (req_id))
                     self.rsp_list.append(rsp)
                     rsp = None
             else:
-                self.logger.debug("Searching for response in response list")
+                self.logger.debug("Searching for response in response list (request ID=%s)" % (req_id))
                 for i in self.rsp_list:
                     if i.cli_req_id == req_id:
                         rsp = i
