@@ -373,9 +373,21 @@ class Client:
 
     def send_message(self, receiver_id, content, receiver_type=RecverType.EN_RECVER_TYPE_PEER, msg_type=MsgType.EN_MSG_TYPE_TEXT):
         if receiver_type != RecverType.EN_RECVER_TYPE_PEER: raise NotImplementedError
-        if msg_type != MsgType.EN_MSG_TYPE_TEXT: raise NotImplementedError
-        if isinstance(content, str): content = {"content": content}
-        content = json.dumps(content, separators=(",", ":"), ensure_ascii=False)
+        if msg_type == MsgType.EN_MSG_TYPE_TEXT:
+            if isinstance(content, str): content = {"content": content}
+            elif not isinstance(content, dict): raise ValueError
+            content = json.dumps(content, separators=(",", ":"), ensure_ascii=False)
+        elif msg_type == MsgType.EN_MSG_TYPE_PIC:
+            if not isinstance(content, dict): raise ValueError
+            content = json.dumps(content, separators=(",", ":"), ensure_ascii=False)
+        elif msg_type == MsgType.EN_MSG_TYPE_CUSTOM_FACE:
+            if not isinstance(content, dict): raise ValueError
+            content = json.dumps(content, separators=(",", ":"), ensure_ascii=False)
+        elif msg_type == MsgType.EN_MSG_TYPE_SHARE_V2:
+            if not isinstance(content, dict): raise ValueError
+            content = json.dumps(content, separators=(",", ":"), ensure_ascii=False)
+        else:
+            raise NotImplementedError
         self.logger.info("Sending private message to UID %s:\n%s" % (receiver_id, content))
         req = ReqSendMsg(msg=Msg(
             sender_uid=self.config.uid,
